@@ -1,11 +1,5 @@
-import { Notice, requestUrl } from 'obsidian';
-import { ALL_FOLDERS_ID } from './modal/folderSelectModal';
-import { ALL_ITEMS } from './modal/tagSelectModal';
-import { ALL_STATUS_ID } from './modal/statusSelectModal';
-import { expandTypeFilterForApi } from './modal/typeSelectModal';
-
 export interface CuboxArticle {
-    id: string; 
+    id: string;
     title: string;
     article_title: string;
     description: string;
@@ -15,7 +9,7 @@ export interface CuboxArticle {
     update_time: string;
     word_count: number;
     content?: string;
-    cubox_url: string;  
+    cubox_url: string;
     highlights?: CuboxHighlight[];
     tags?: string[];
     type: string;
@@ -51,13 +45,6 @@ interface ListResponse {
     data: CuboxArticle[];
 }
 
-export class CuboxApiKeyMissingError extends Error {
-    constructor(message = 'Cubox API key is missing or invalid.') {
-        super(message);
-        this.name = 'CuboxApiKeyMissingError';
-    }
-}
-
 interface ContentResponse {
     code: number;
     message: string;
@@ -76,6 +63,13 @@ interface TagsResponse {
     data: CuboxTag[];
 }
 
+export class CuboxApiKeyMissingError extends Error {
+    constructor(message = 'Cubox API key is missing or invalid.') {
+        super(message);
+        this.name = 'CuboxApiKeyMissingError';
+    }
+}
+
 export class CuboxApi {
     private endpoint: string;
     private apiKey: string;
@@ -85,139 +79,70 @@ export class CuboxApi {
         this.apiKey = apiKey;
     }
 
-    /**
-     * 同时更新域名和 API Key
-     */
-    updateConfig(domain: string, apiKey: string): void {
-        this.endpoint = `https://${domain}`;
-        this.apiKey = apiKey;
-    }
-
     private async request(path: string, options: RequestInit = {}) {
         const url = `${this.endpoint}${path}`;
-        const headers: Record<string, string> = {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-        };
 
-        if (options.headers) {
-            Object.entries(options.headers).forEach(([key, value]) => {
-                if (typeof value === 'string') {
-                    headers[key] = value;
-                }
-            });
-        }
-
-        const response = await requestUrl({
-            url: url,
-            method: options.method || 'GET',
-            body: options.body as string | ArrayBuffer | undefined,
-            headers: headers,
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                'Authorization': `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json',
+                ...options.headers,
+            },
         });
 
-        if (response.status >= 400) {
+        if (!response.ok) {
             throw new Error(`API request failed: ${response.status}`);
         }
 
-        return JSON.parse(response.text);
+        return response.json();
     }
 
     /**
-     * 获取文章列表
-     * @param params 请求参数
+     * 获取文章列表（分页）
      */
-    async getArticles(
-        params: { 
-            lastCardId: string | null; 
-            lastCardUpdateTime: string | null;
-            folderFilter?: string[];
-            typeFilter?: string[];
-            statusFilter?: string[];
-            tagsFilter?: string[];
-            isRead?: boolean;
-            isStarred?: boolean;
-            isAnnotated?: boolean;
-        } = { lastCardId: null, lastCardUpdateTime: null }
-    ): Promise<{ articles: CuboxArticle[], hasMore: boolean}> {
-        try {
-            const requestBody: Record<string, any> = {
-                limit: 50
-            };
-            
-            const pageSize = 50;
-            
-            if (params.lastCardId !== null && params.lastCardId.length > 0 && params.lastCardUpdateTime !== null && params.lastCardUpdateTime.length > 0) {
-                requestBody.last_card_id = params.lastCardId;   
-                requestBody.last_card_update_time = params.lastCardUpdateTime;
-            }
-            
-            // 添加文件夹过滤
-            if (params.folderFilter && params.folderFilter.length > 0) {
-                // 检查是否包含 ALL_FOLDERS_ID，如果包含则不添加文件夹过滤
-                const hasAllFoldersId = params.folderFilter.includes(ALL_FOLDERS_ID);
-                if (!hasAllFoldersId) {
-                    requestBody.group_filters = params.folderFilter;
-                }
-            }
-            
-            // 添加类型过滤（Others 展开为 Memo/Image/Audio/Video/File）
-            if (params.typeFilter && params.typeFilter.length > 0) {
-                requestBody.type_filters = expandTypeFilterForApi(params.typeFilter);
-            }
-            
-            // 添加状态过滤
-            if (params.statusFilter && params.statusFilter.length > 0) {
-                const hasAllStatus = params.statusFilter.includes(ALL_STATUS_ID);
-                if (!hasAllStatus) {
-                    // 使用传入的布尔值参数，只有当参数为true时才添加
-                    if (params.isRead === true) requestBody.read = true;
-                    if (params.isStarred === true) requestBody.starred = true;
-                    if (params.isAnnotated === true) requestBody.annotated = true;
-                }
-            }
-            
-            // 添加标签过滤
-            if (params.tagsFilter && params.tagsFilter.length > 0) {
-                // 检查是否包含 ALL_TAGS_ID，如果包含则不添加标签过滤
-                const hasAllTagsId = params.tagsFilter.includes(ALL_ITEMS);
-                if (!hasAllTagsId) {
-                    requestBody.tag_filters = params.tagsFilter;
-                }
-            }
+    async getArticles(params: {
+        lastCardId?: string | null;
+        lastCardUpdateTime?: string | null;
+        annotated?: boolean;
+        folderIds?: string[];
+        tagIds?: string[];
+        typeFilters?: string[];
+    } = {}): Promise<{ articles: CuboxArticle[]; hasMore: boolean }> {
+        const pageSize = 50;
+        const requestBody: Record<string, unknown> = { limit: pageSize };
 
-            const path = `/c/api/third-party/card/filter`;
-            const response = await this.request(path, {
-                method: 'POST',
-                body: JSON.stringify(requestBody)
-            }) as ListResponse;
-
-            if (response.code === -1100) {
-                throw new CuboxApiKeyMissingError(response.message || 'API key not found');
-            }
-            
-            const articles = response.data ?? [];
-            const hasMore = articles && articles.length >= pageSize;
-
-            return {
-                articles,
-                hasMore
-            };
-        } catch (error) {
-            console.error('获取文章列表失败:', error);
-            throw error;
+        if (params.lastCardId && params.lastCardUpdateTime) {
+            requestBody.last_card_id = params.lastCardId;
+            requestBody.last_card_update_time = params.lastCardUpdateTime;
         }
+
+        if (params.annotated) requestBody.annotated = true;
+        if (params.folderIds?.length) requestBody.group_filters = params.folderIds;
+        if (params.tagIds?.length) requestBody.tag_filters = params.tagIds;
+        if (params.typeFilters?.length) requestBody.type_filters = params.typeFilters;
+
+        const response = await this.request('/c/api/third-party/card/filter', {
+            method: 'POST',
+            body: JSON.stringify(requestBody),
+        }) as ListResponse;
+
+        if (response.code === -1100) {
+            throw new CuboxApiKeyMissingError(response.message || 'API key not found');
+        }
+
+        const articles = response.data ?? [];
+        return { articles, hasMore: articles.length >= pageSize };
     }
 
     /**
-     * 获取文章详情，包括内容
-     * @param articleId 文章ID
+     * 获取文章详情内容
      */
     async getArticleDetail(articleId: string): Promise<string | null> {
         try {
-            const path = `/c/api/third-party/card/content?id=${articleId}`;
-            const response = await this.request(path) as ContentResponse;
-            
-            // 直接返回文章内容
+            const response = await this.request(
+                `/c/api/third-party/card/content?id=${articleId}`,
+            ) as ContentResponse;
             return response.data;
         } catch (error) {
             console.error(`获取文章 ${articleId} 详情失败:`, error);
@@ -226,32 +151,22 @@ export class CuboxApi {
     }
 
     /**
-     * 获取用户的文件夹列表
+     * 获取文件夹列表
      */
     async getFolders(): Promise<CuboxFolder[]> {
-        try {
-            const path = '/c/api/third-party/group/list';
-            const response = await this.request(path) as FoldersResponse;
-            
-            return response.data ?? [];
-        } catch (error) {
-            console.error('获取 Cubox 文件夹列表失败:', error);
-            throw error;
-        }
+        const response = await this.request(
+            '/c/api/third-party/group/list',
+        ) as FoldersResponse;
+        return response.data ?? [];
     }
 
     /**
-     * 获取用户的标签列表
+     * 获取标签列表
      */
     async getTags(): Promise<CuboxTag[]> {
-        try {
-            const path = '/c/api/third-party/tag/list';
-            const response = await this.request(path) as TagsResponse;
-            
-            return response.data ?? [];
-        } catch (error) {
-            console.error('获取 Cubox 标签列表失败:', error);
-            throw error;
-        }
+        const response = await this.request(
+            '/c/api/third-party/tag/list',
+        ) as TagsResponse;
+        return response.data ?? [];
     }
 }

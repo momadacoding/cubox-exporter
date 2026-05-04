@@ -1,41 +1,30 @@
 {
-	"name": "obsidian-cubox",
-	"version": "1.0.7",
-	"description": "This is a cubox plugin for Obsidian (https://obsidian.md)",
-	"main": "main.js",
-	"scripts": {
-		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"version": "node version-bump.mjs && git add manifest.json versions.json",
-		"test": "jest",
-		"test:watch": "jest --watch"
-	},
-	"keywords": [],
-	"author": "",
-	"license": "MIT",
-	"engines": {
-		"node": ">=22"
-	},
-	"devDependencies": {
-		"@types/mustache": "^4.2.5",
-		"@types/node": "^22.15.0",
-		"@types/luxon": "^3.4.2",
-		"@typescript-eslint/eslint-plugin": "5.29.0",
-		"@typescript-eslint/parser": "5.29.0",
-		"builtin-modules": "3.3.0",
-		"esbuild": "0.17.3",
-		"mustache": "^4.2.0",
-		"obsidian": "latest",
-		"tslib": "2.4.0",
-		"typescript": "4.7.4",
-		"luxon": "^3.1.1",
-		"@types/jest": "^29.5.0",
-		"jest": "^29.5.0",
-		"ts-jest": "^29.1.0",
-		"jest-environment-jsdom": "^29.5.0"
-	},
-	"dependencies": {
-		"mustache": "^4.2.0",
-		"luxon": "^3.1.1"
-	}
+  "name": "cubox-export",
+  "version": "1.0.0",
+  "description": "CLI tool to export Cubox highlights to JSON",
+  "main": "dist/cli.js",
+  "bin": {
+    "cubox-export": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "dev": "tsx src/cli.ts"
+  },
+  "keywords": ["cubox", "highlights", "export"],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "luxon": "^3.1.1"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.4.2",
+    "@types/node": "^22.15.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
 }
