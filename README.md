@@ -1,48 +1,71 @@
-# Cubox Plugin for Obsidian
+# Cubox Exporter
 
-The official Cubox plugin for Obsidian allows you to synchronize articles and annotations from Cubox to Obsidian.
-
-## Features
-
-- Automatic Sync: Periodically sync articles and annotations from Cubox to Obsidian
-- Filtering: Filter content by folder, type, tags, and status
-- Templates: Customize file names, front matter, and content format
-- Annotation Sync: Sync highlighted content from Cubox to Obsidian notes
-
-## Installation
-
-### Install from the Community
-
-1. Open Obsidian settings
-2. Navigate to the "Community plugins" tab
-3. Click the "Browse" button and search for "Cubox"
-4. Click Install
-
-### Manual Installation
-
-1. Download the latest `main.js`, `manifest.json`, and `styles.css` files
-2. Create a `.obsidian/plugins/obsidian-cubox` folder in your Obsidian vault
-3. Copy the downloaded files into this folder
-4. Enable the plugin in Obsidian settings
-
-## Configuration
-
-1. Cubox Server Domain: Select the Cubox server domain you use (cubox.cc or cubox.pro)
-2. Cubox API Key: Enter your Cubox API key or link (generate it in the Cubox web settings under Extensions & Automation - API Extension)
+CLI tool to export your Cubox highlights to JSON.
 
 ## Usage
 
-1. Before setting up, ensure you have selected the correct server and entered the API key
-2. Only content that meets all filter conditions will be synced
-3. Refer to the settings page for reference links to template variables
-4. Each item is synced only once from Cubox, updates in Cubox will not be synced to Obsidian unless you change the target folder
-5. It is recommended to set a longer sync interval or use manual sync to prevent syncing unfinished annotations
+```bash
+# Interactive mode (prompts for domain and API key)
+npx cubox-export
 
-## Dependencies
+# Command-line mode
+npx cubox-export -k <your-api-key> -d cubox.cc -o highlights.json
+```
 
-- [Mustache](https://mustache.github.io/): Template rendering
-- [Luxon](https://moment.github.io/luxon/#/formatting?id=table-of-tokens): Date and time handling
+### Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-k, --api-key <key>` | Cubox API key | (interactive prompt) |
+| `-d, --domain <domain>` | `cubox.cc` or `cubox.pro` | `cubox.cc` |
+| `-o, --output <file>` | Output file path | `cubox-highlights.json` |
+
+### Getting your API key
+
+1. Go to [cubox.cc](https://cubox.cc/web/settings/extensions) or [cubox.pro](https://cubox.pro/web/settings/extensions)
+2. Find **Extensions & Automation > API Extension**
+3. Generate and copy your API key
+
+## Output format
+
+```json
+{
+  "exported_at": "2026-05-04T12:00:00.000Z",
+  "cubox_domain": "cubox.cc",
+  "total_articles": 10,
+  "total_highlights": 42,
+  "articles": [
+    {
+      "title": "Article Title",
+      "url": "https://example.com/article",
+      "domain": "example.com",
+      "cubox_url": "https://cubox.cc/...",
+      "create_time": "2026-05-01T10:30:00Z",
+      "tags": ["tag1", "tag2"],
+      "highlights": [
+        {
+          "text": "Highlighted text",
+          "note": "Your annotation",
+          "color": "#FFD700",
+          "create_time": "2026-05-01T10:35:00Z",
+          "cubox_url": "https://cubox.cc/..."
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Development
+
+```bash
+npm install
+npm run dev       # Run with tsx
+npm run build     # Compile to dist/
+```
+
+Requires Node.js >= 22.
 
 ## License
 
-This project is licensed under the [MIT License](https://choosealicense.com/licenses/mit/).
+[MIT](LICENSE)
