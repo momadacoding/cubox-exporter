@@ -8,6 +8,7 @@ import { CuboxApi, CuboxApiKeyMissingError, CuboxArticle } from './cuboxApi';
 
 /** 导出的高亮条目 */
 interface ExportHighlight {
+    id: string;
     text: string;
     note: string;
     color: string;
@@ -17,6 +18,7 @@ interface ExportHighlight {
 
 /** 导出的文章条目 */
 interface ExportArticle {
+    id: string;
     title: string;
     url: string;
     domain: string;
@@ -28,6 +30,8 @@ interface ExportArticle {
 
 /** 导出文件顶层结构 */
 interface ExportData {
+    source: 'cubox';
+    schema_version: number;
     exported_at: string;
     cubox_domain: string;
     total_articles: number;
@@ -95,6 +99,8 @@ function buildExportData(articles: CuboxArticle[], domain: string): ExportData {
     );
 
     return {
+        source: 'cubox',
+        schema_version: 1,
         exported_at: new Date().toISOString(),
         cubox_domain: domain,
         total_articles: withHighlights.length,
@@ -103,6 +109,7 @@ function buildExportData(articles: CuboxArticle[], domain: string): ExportData {
             0,
         ),
         articles: withHighlights.map((a) => ({
+            id: a.id || '',
             title: a.title || a.article_title || '',
             url: a.url || '',
             domain: a.domain || '',
@@ -110,6 +117,7 @@ function buildExportData(articles: CuboxArticle[], domain: string): ExportData {
             create_time: a.create_time || '',
             tags: a.tags || [],
             highlights: (a.highlights || []).map((h) => ({
+                id: h.id || '',
                 text: h.text || '',
                 note: h.note || '',
                 color: h.color || '',
