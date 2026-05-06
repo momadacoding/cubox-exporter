@@ -1,17 +1,20 @@
 {
-  "name": "cubox-export",
-  "version": "1.0.0",
-  "description": "CLI tool to export Cubox highlights to JSON",
+  "name": "cubox-exporter",
+  "version": "2.0.0",
+  "description": "Desktop tool to export Cubox highlights to JSON for Acorny",
   "main": "dist/cli.js",
   "bin": {
     "cubox-export": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/cli.js",
-    "dev": "tsx src/cli.ts"
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "cli:build": "tsc",
+    "cli:start": "node dist/cli.js",
+    "cli:dev": "tsx src/cli.ts"
   },
-  "keywords": ["cubox", "highlights", "export"],
+  "keywords": ["cubox", "highlights", "export", "tauri", "desktop"],
   "author": "",
   "license": "MIT",
   "engines": {
@@ -22,6 +25,7 @@
     "luxon": "^3.1.1"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2",
     "@types/luxon": "^3.4.2",
     "@types/node": "^22.15.0",
     "tsx": "^4.19.0",

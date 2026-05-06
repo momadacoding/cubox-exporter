@@ -21,3 +21,10 @@ coverage/
 cubox-highlights.json
 test/
 .cursor
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# Temp icon source
+app-icon.png
